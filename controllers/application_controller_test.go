@@ -2,8 +2,8 @@ package controllers
 
 import (
 	"github.com/stretchr/testify/assert"
-	"ncbi_proj/server/models"
-	"ncbi_proj/server/utils"
+	"ncbi-tool-server/models"
+	"ncbi-tool-server/utils"
 	"net/http/httptest"
 	"testing"
 )

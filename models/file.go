@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/s3"
-	"ncbi_proj/server/utils"
+	"ncbi-tool-server/utils"
 	"strconv"
 	"time"
 )

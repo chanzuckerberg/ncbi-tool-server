@@ -7,8 +7,8 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 	"log"
 	_ "github.com/go-sql-driver/mysql"
-	"ncbi_proj/server/controllers"
-	"ncbi_proj/server/utils"
+	"ncbi-tool-server/controllers"
+	"ncbi-tool-server/utils"
 	"net/http"
 	"os"
 )

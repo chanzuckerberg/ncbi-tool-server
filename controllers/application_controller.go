@@ -2,7 +2,7 @@ package controllers
 
 import (
 	"encoding/json"
-	"ncbi_proj/server/utils"
+	"ncbi-tool-server/utils"
 	"net/http"
 )
 

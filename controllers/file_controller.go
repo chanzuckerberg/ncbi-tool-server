@@ -2,8 +2,8 @@ package controllers
 
 import (
 	"github.com/gorilla/mux"
-	"ncbi_proj/server/models"
-	"ncbi_proj/server/utils"
+	"ncbi-tool-server/models"
+	"ncbi-tool-server/utils"
 	"net/http"
 )
 
