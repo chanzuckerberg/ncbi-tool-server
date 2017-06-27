@@ -111,10 +111,10 @@ func (d *Directory) getAtTimeDb(pathName string,
 		"and max.VersionNum = e.VersionNum",
 		pathName, inputTime)
 	rows, err := d.ctx.Db.Query(query)
-	defer rows.Close()
 	if err != nil {
 		return res, errors.New("No results found.")
 	}
+	defer rows.Close()
 
 	// Process results
 	for rows.Next() {

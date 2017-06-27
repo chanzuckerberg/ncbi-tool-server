@@ -1,9 +1,8 @@
 FROM golang:1.7
-RUN mkdir -p /app
-WORKDIR /app
-ADD . /app
-RUN go get github.com/go-sql-driver/mysql
-RUN go get github.com/gorilla/mux
-RUN go get github.com/mattn/go-sqlite3
+RUN mkdir -p /go/src/ncbi-tool-server
+WORKDIR /go/src/ncbi-tool-server
+ADD . /go/src/ncbi-tool-server
+RUN go get ./...
 RUN go build
-CMD ["./app"]
+EXPOSE 80
+CMD ["./ncbi-tool-server"]

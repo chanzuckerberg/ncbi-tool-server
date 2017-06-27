@@ -19,20 +19,36 @@ func init() {
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
 }
 
+// General setup procedure
 func main() {
 	// Setup
 	ctx := utils.NewContext()
 	var err error
-	ctx.Db, err = sql.Open("mysql",
-		"tool:MrnUaj6Epq2@/versions")
-	defer ctx.Db.Close()
+
+	isDevelopment := os.Getenv("ENVIRONMENT") == "development"
+	if isDevelopment {
+		// File is created if absent
+		ctx.Db, err = sql.Open("sqlite3",
+			"versions.db")
+	} else {
+		// Setup RDS db from env variables
+		RDS_HOSTNAME := os.Getenv("RDS_HOSTNAME")
+		RDS_PORT := os.Getenv("RDS_PORT")
+		RDS_DB_NAME := os.Getenv("RDS_DB_NAME")
+		RDS_USERNAME := os.Getenv("RDS_USERNAME")
+		RDS_PASSWORD := os.Getenv("RDS_PASSWORD")
+		sourceName := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s", RDS_USERNAME, RDS_PASSWORD, RDS_HOSTNAME, RDS_PORT, RDS_DB_NAME)
+		ctx.Db, err = sql.Open("mysql", sourceName)
+	}
+
 	if err != nil {
-		log.Fatal("Failed to open database.")
+		log.Println("Failed to set up database opener.")
 		log.Fatal(err)
 	}
+	defer ctx.Db.Close()
 	err = ctx.Db.Ping()
 	if err != nil {
-		log.Fatal("Failed to ping database.")
+		log.Println("Failed to ping database.")
 		log.Fatal(err)
 	}
 
@@ -51,6 +67,7 @@ func main() {
 	log.Println("Starting listener...")
 	err = http.ListenAndServe(":8000", router)
 	if err != nil {
+		log.Println(err.Error())
 		log.Fatal("Error in running listen and serve.")
 	}
 }

@@ -98,10 +98,10 @@ func (f *File) versionFromTime(path string,
 func (f *File) topFromQuery(query string) (Metadata, error) {
 	md := Metadata{}
 	row, err := f.ctx.Db.Query(query)
-	defer row.Close()
-	if err != nil {
+	if row == nil || err != nil {
 		return md, err
 	}
+	defer row.Close()
 
 	// Process results
 	if !row.Next() {
@@ -160,10 +160,10 @@ func (f *File) GetHistory(path string) ([]Entry, error) {
 	query := fmt.Sprintf("select * from entries "+
 		"where PathName='%s' order by VersionNum desc", path)
 	rows, err := f.ctx.Db.Query(query)
-	defer rows.Close()
 	if err != nil {
 		return res, err
 	}
+	defer rows.Close()
 
 	// Process results
 	md := Metadata{}
