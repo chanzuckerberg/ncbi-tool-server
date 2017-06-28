@@ -5,6 +5,7 @@ import (
 	"ncbi-tool-server/models"
 	"ncbi-tool-server/utils"
 	"net/http"
+	"errors"
 )
 
 // FileController is for handling file actions
@@ -40,7 +41,7 @@ func (fc *FileController) Show(w http.ResponseWriter,
 	// Dispatch operations
 	switch {
 	case pathName == "":
-		fc.BadRequest(w)
+		fc.BadRequest(w, errors.New("empty pathName"))
 		return
 	case op == "history":
 		// Serve up file history
@@ -57,7 +58,7 @@ func (fc *FileController) Show(w http.ResponseWriter,
 	}
 
 	if err != nil {
-		fc.InternalError(w, err)
+		fc.BadRequest(w, err)
 		return
 	}
 	fc.Output(w, result)

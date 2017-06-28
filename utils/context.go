@@ -36,18 +36,20 @@ func NewContext() *Context {
 }
 
 // Loads the configuration file.
-func (ctx *Context) loadConfig() (*Context, error) {
+func (ctx *Context) loadConfig() *Context {
 	file, err := ioutil.ReadFile("config.yaml")
 	if err != nil {
-		return nil, err
+		log.Fatal("Error loading config: " + err.Error())
+		return nil
 	}
 
 	err = yaml.Unmarshal(file, ctx)
 	if err != nil {
-		return nil, err
+		log.Fatal("Error loading config: " + err.Error())
+		return nil
 	}
 
-	return ctx, err
+	return ctx
 }
 
 // Creates a new AWS client session.
@@ -65,7 +67,13 @@ func (ctx *Context) SetupDatabase() {
 	if isDevelopment {
 		ctx.Db, err = sql.Open("mysql",
 			"dev:password@tcp(127.0.0.1:3306)/testdb")
-		ctx.Db.Exec("create table if not exists entries")
+		if err != nil {
+			log.Fatal("Failed to set up database opener: " + err.Error())
+		}
+		_, err = ctx.Db.Exec("create table if not exists entries")
+		if err != nil {
+			log.Fatal("Failed to create table entries: " + err.Error())
+		}
 	} else {
 		// Setup RDS db from env variables
 		rdsHostname := os.Getenv("RDS_HOSTNAME")

@@ -5,6 +5,7 @@ import (
 	"ncbi-tool-server/models"
 	"ncbi-tool-server/utils"
 	"net/http"
+	"errors"
 )
 
 // DirectoryController is for handling directory actions
@@ -41,7 +42,7 @@ func (dc *DirectoryController) Show(w http.ResponseWriter,
 	// Dispatch operations
 	switch {
 	case pathName == "":
-		dc.BadRequest(w)
+		dc.BadRequest(w, errors.New("empty pathName"))
 		return
 	case op == "at-time":
 		// Serve up folder at a given time
@@ -52,7 +53,7 @@ func (dc *DirectoryController) Show(w http.ResponseWriter,
 	}
 
 	if err != nil {
-		dc.InternalError(w, err)
+		dc.BadRequest(w, err)
 		return
 	}
 	dc.Output(w, result)
