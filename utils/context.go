@@ -8,6 +8,9 @@ import (
 	"github.com/aws/aws-sdk-go/service/s3/s3iface"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
+	"os"
+	"fmt"
+	"log"
 )
 
 // General state variables for the server
@@ -52,4 +55,36 @@ func (ctx *Context) connectAWS() *Context {
 		Region: aws.String("us-west-2"),
 	})))
 	return ctx
+}
+
+func (ctx *Context) SetupDatabase() {
+	var err error
+	isDevelopment := os.Getenv("ENVIRONMENT") == "development"
+	if isDevelopment {
+		ctx.Db, err = sql.Open("mysql",
+			"dev:password@tcp(127.0.0.1:3306)/testdb")
+		ctx.Db.Exec("create table if not exists entries")
+	} else {
+		// Setup RDS db from env variables
+		RDS_HOSTNAME := os.Getenv("RDS_HOSTNAME")
+		RDS_PORT := os.Getenv("RDS_PORT")
+		RDS_DB_NAME := os.Getenv("RDS_DB_NAME")
+		RDS_USERNAME := os.Getenv("RDS_USERNAME")
+		RDS_PASSWORD := os.Getenv("RDS_PASSWORD")
+		sourceName := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s",
+			RDS_USERNAME, RDS_PASSWORD, RDS_HOSTNAME, RDS_PORT, RDS_DB_NAME)
+		log.Println("RDS connection string: " + sourceName)
+		ctx.Db, err = sql.Open("mysql", sourceName)
+	}
+
+	if err != nil {
+		log.Println(err)
+		log.Fatal("Failed to set up database opener.")
+	}
+	err = ctx.Db.Ping()
+	if err != nil {
+		log.Println(err)
+		log.Fatal("Failed to ping database.")
+	}
+	log.Println("Successfully connected database.")
 }

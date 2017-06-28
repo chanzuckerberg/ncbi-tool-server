@@ -9,6 +9,7 @@ import (
 	"ncbi-tool-server/utils"
 	"strconv"
 	"time"
+	"log"
 )
 
 // File Model
@@ -88,8 +89,9 @@ func (f *File) versionFromTime(path string,
 	inputTime string) (Metadata, error) {
 	// Query the database
 	query := fmt.Sprintf("select * from entries where "+
-		"PathName='%s' and DateModified <= datetime('%s') order "+
+		"PathName='%s' and DateModified <= '%s' order "+
 		"by VersionNum desc", path, inputTime)
+	log.Println("Query: " + query)
 	return f.topFromQuery(query)
 }
 

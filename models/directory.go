@@ -105,7 +105,7 @@ func (d *Directory) getAtTimeDb(pathName string,
 		"select max(VersionNum) VersionNum, PathName "+
 		"from entries "+
 		"where PathName LIKE '%s%%' "+
-		"and DateModified <= datetime('%s') "+
+		"and DateModified <= '%s' "+
 		"group by PathName ) as max "+
 		"on max.PathName = e.PathName "+
 		"and max.VersionNum = e.VersionNum",

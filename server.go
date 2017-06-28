@@ -1,7 +1,6 @@
 package main
 
 import (
-	"database/sql"
 	"fmt"
 	"github.com/gorilla/mux"
 	_ "github.com/mattn/go-sqlite3"
@@ -25,32 +24,8 @@ func main() {
 	ctx := utils.NewContext()
 	var err error
 
-	isDevelopment := os.Getenv("ENVIRONMENT") == "development"
-	if isDevelopment {
-		// File is created if absent
-		ctx.Db, err = sql.Open("sqlite3",
-			"versions.db")
-	} else {
-		// Setup RDS db from env variables
-		RDS_HOSTNAME := os.Getenv("RDS_HOSTNAME")
-		RDS_PORT := os.Getenv("RDS_PORT")
-		RDS_DB_NAME := os.Getenv("RDS_DB_NAME")
-		RDS_USERNAME := os.Getenv("RDS_USERNAME")
-		RDS_PASSWORD := os.Getenv("RDS_PASSWORD")
-		sourceName := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s", RDS_USERNAME, RDS_PASSWORD, RDS_HOSTNAME, RDS_PORT, RDS_DB_NAME)
-		ctx.Db, err = sql.Open("mysql", sourceName)
-	}
-
-	if err != nil {
-		log.Println("Failed to set up database opener.")
-		log.Fatal(err)
-	}
+	ctx.SetupDatabase()
 	defer ctx.Db.Close()
-	err = ctx.Db.Ping()
-	if err != nil {
-		log.Println("Failed to ping database.")
-		log.Fatal(err)
-	}
 
 	// Routing
 	router := mux.NewRouter()
@@ -58,6 +33,11 @@ func main() {
 	fileController.Register(router)
 	directoryController := controllers.NewDirectoryController(ctx)
 	directoryController.Register(router)
+	router.HandleFunc("/",
+		func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprint(w, "Welcome to the NCBI data tool.")
+	})
+
 	router.NotFoundHandler = http.HandlerFunc(
 		func(w http.ResponseWriter, r *http.Request) {
 			fmt.Fprint(w, "Page not found.")
