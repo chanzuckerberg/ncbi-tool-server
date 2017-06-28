@@ -2,10 +2,10 @@ package main
 
 import (
 	"fmt"
+	_ "github.com/go-sql-driver/mysql"
 	"github.com/gorilla/mux"
 	_ "github.com/mattn/go-sqlite3"
 	"log"
-	_ "github.com/go-sql-driver/mysql"
 	"ncbi-tool-server/controllers"
 	"ncbi-tool-server/utils"
 	"net/http"
@@ -35,8 +35,8 @@ func main() {
 	directoryController.Register(router)
 	router.HandleFunc("/",
 		func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprint(w, "Welcome to the NCBI data tool.")
-	})
+			fmt.Fprint(w, "Welcome to the NCBI data tool.")
+		})
 
 	router.NotFoundHandler = http.HandlerFunc(
 		func(w http.ResponseWriter, r *http.Request) {

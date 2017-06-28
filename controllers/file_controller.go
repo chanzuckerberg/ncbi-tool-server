@@ -7,21 +7,25 @@ import (
 	"net/http"
 )
 
+// FileController is for handling file actions
 type FileController struct {
 	ApplicationController
 	ctx *utils.Context
 }
 
+// NewFileController returns a new controller instance
 func NewFileController(ctx *utils.Context) *FileController {
 	return &FileController{
 		ctx: ctx,
 	}
 }
 
+// Register registers the file endpoint with the router
 func (fc *FileController) Register(router *mux.Router) {
 	router.HandleFunc("/file", fc.Show)
 }
 
+// Show handles requests for showing file information
 func (fc *FileController) Show(w http.ResponseWriter,
 	r *http.Request) {
 	// Setup

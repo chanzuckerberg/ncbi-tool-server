@@ -13,13 +13,14 @@ type Directory struct {
 	ctx *utils.Context
 }
 
+// NewDirectory makes a new directory instance
 func NewDirectory(ctx *utils.Context) *Directory {
 	return &Directory{
 		ctx: ctx,
 	}
 }
 
-// Gets the latest directory listing for the path.
+// GetLatest gets the latest directory listing for the path.
 func (d *Directory) GetLatest(pathName string,
 	output string) ([]Entry, error) {
 	// Setup
@@ -31,7 +32,7 @@ func (d *Directory) GetLatest(pathName string,
 	// Get listing from S3
 	listing, err := d.ListObj(pathName)
 	if err != nil || len(listing) == 0 {
-		return resp, errors.New("Empty or non-existent directory.")
+		return resp, errors.New("empty or non-existent directory")
 	}
 
 	// Process results
@@ -43,17 +44,18 @@ func (d *Directory) GetLatest(pathName string,
 				return resp, err
 			}
 		}
-		entry := Entry{Path: *val.Key, Url: url}
+		entry := Entry{Path: *val.Key, URL: url}
 		resp = append(resp, entry)
 	}
 
 	if len(resp) == 0 {
-		err = errors.New("No results.")
+		err = errors.New("no results")
 	}
 	return resp, err
 }
 
-// Gets approximate directory listing at a point in time from the Db.
+// GetPast gets the approximate directory listing at a point in time
+// from the Db.
 func (d *Directory) GetPast(pathName string, inputTime string,
 	output string) ([]Entry, error) {
 	// Setup
@@ -65,7 +67,7 @@ func (d *Directory) GetPast(pathName string, inputTime string,
 	// Get archive versions from DB
 	listing, err := d.getAtTimeDb(pathName, inputTime)
 	if err != nil || len(listing) == 0 {
-		return resp, errors.New("Empty or non-existent directory.")
+		return resp, errors.New("empty or non-existent directory")
 	}
 
 	// Process results
@@ -81,13 +83,13 @@ func (d *Directory) GetPast(pathName string, inputTime string,
 			Path:    val.Path,
 			Version: val.Version,
 			ModTime: val.ModTime.String,
-			Url:     url,
+			URL:     url,
 		}
 		resp = append(resp, entry)
 	}
 
 	if len(resp) == 0 {
-		err = errors.New("No results.")
+		err = errors.New("no results")
 	}
 	return resp, err
 }
@@ -112,7 +114,7 @@ func (d *Directory) getAtTimeDb(pathName string,
 		pathName, inputTime)
 	rows, err := d.ctx.Db.Query(query)
 	if err != nil {
-		return res, errors.New("No results found.")
+		return res, errors.New("no results found")
 	}
 	defer rows.Close()
 
@@ -128,8 +130,8 @@ func (d *Directory) getAtTimeDb(pathName string,
 	return res, err
 }
 
-// Lists objects with a given prefix in S3.
-// Lists the files in a S3 folder path.
+// ListObj lists objects with a given prefix in S3. Lists the files
+// in a S3 folder path.
 func (d *Directory) ListObj(pathName string) ([]*s3.Object, error) {
 	var err error
 	// Remove leading forward slash
@@ -144,7 +146,8 @@ func (d *Directory) ListObj(pathName string) ([]*s3.Object, error) {
 	// Filter out zero size objects to ignore the 'folder' objects
 	pruned := []*s3.Object{}
 	for _, val := range res.Contents {
-		if int(*val.Size) > 0 {
+		// Don't include the query itself
+		if int(*val.Size) > 0 && *val.Key != pathName {
 			pruned = append(pruned, val)
 		}
 	}

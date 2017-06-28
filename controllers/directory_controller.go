@@ -7,11 +7,13 @@ import (
 	"net/http"
 )
 
+// DirectoryController is for handling directory actions
 type DirectoryController struct {
 	ApplicationController
 	ctx *utils.Context
 }
 
+// NewDirectoryController returns a new controller instance
 func NewDirectoryController(
 	ctx *utils.Context) *DirectoryController {
 	return &DirectoryController{
@@ -19,10 +21,12 @@ func NewDirectoryController(
 	}
 }
 
+// Register registers the directory endpoint with the router
 func (dc *DirectoryController) Register(router *mux.Router) {
 	router.HandleFunc("/directory", dc.Show)
 }
 
+// Show handles requests for showing directory listing
 func (dc *DirectoryController) Show(w http.ResponseWriter,
 	r *http.Request) {
 	// Setup
