@@ -45,7 +45,7 @@ func main() {
 
 	// Start server
 	log.Println("Starting listener...")
-	err = http.ListenAndServe(":8000", router)
+	err = http.ListenAndServe(":80", router)
 	if err != nil {
 		log.Println(err.Error())
 		log.Fatal("Error in running listen and serve.")

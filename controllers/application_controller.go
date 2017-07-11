@@ -33,9 +33,10 @@ func (ac *ApplicationController) InternalError(w http.ResponseWriter,
 }
 
 // BadRequest sends an error for badly formed requests to the client
-func (ac *ApplicationController) BadRequest(w http.ResponseWriter, err error) {
+func (ac *ApplicationController) BadRequest(w http.ResponseWriter,
+	err error) {
 	res := ErrorResponse{http.StatusBadRequest,
-	                     "Invalid request: "+err.Error()}
+	                     "Request error: "+err.Error()}
 	ac.ErrorOutput(w, res)
 }
 
@@ -45,7 +46,8 @@ func (ac *ApplicationController) ErrorOutput(w http.ResponseWriter,
 	js, err := json.Marshal(result)
 	if err != nil {
 		log.Print("Error with JSON marshal: "+err.Error())
-		http.Error(w, "Error: "+err.Error(), http.StatusInternalServerError)
+		http.Error(w, "Error: "+err.Error(),
+			http.StatusInternalServerError)
 	}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(result.Code)
