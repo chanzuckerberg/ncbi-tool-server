@@ -10,6 +10,8 @@ import (
 	"ncbi-tool-server/utils"
 	"net/http"
 	"os"
+	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/s3"
 )
 
 func init() {
@@ -22,8 +24,13 @@ func init() {
 func main() {
 	// Setup
 	ctx := utils.NewContext()
+	ctx.Bucket = os.Getenv("BUCKET")
+	ctx.Port = "80"
+	if os.Getenv("PORT") != "" {
+		ctx.Port = os.Getenv("PORT")
+	}
+	ctx.Store = s3.New(session.Must(session.NewSession()))
 	var err error
-
 	ctx.SetupDatabase()
 	defer ctx.Db.Close()
 
@@ -37,17 +44,16 @@ func main() {
 		func(w http.ResponseWriter, r *http.Request) {
 			fmt.Fprint(w, "Welcome to the NCBI data tool.")
 		})
-
 	router.NotFoundHandler = http.HandlerFunc(
 		func(w http.ResponseWriter, r *http.Request) {
 			fmt.Fprint(w, "Page not found.")
 		})
 
 	// Start server
-	log.Println("Starting listener...")
-	err = http.ListenAndServe(":80", router)
+	log.Print("Starting listener...")
+	err = http.ListenAndServe(":" + ctx.Port, router)
 	if err != nil {
-		log.Println(err.Error())
+		log.Print(err.Error())
 		log.Fatal("Error in running listen and serve.")
 	}
 }

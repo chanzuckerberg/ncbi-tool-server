@@ -6,6 +6,8 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"ncbi-tool-server/utils"
+	"log"
+	"sort"
 )
 
 // Directory Model
@@ -152,4 +154,86 @@ func (d *Directory) ListObj(pathName string) ([]*s3.Object, error) {
 		}
 	}
 	return pruned, err
+}
+
+type CompareResponse struct {
+	Path       string
+	Tag        string
+}
+
+func (d *Directory) CompareListing(pathName string, startDate string, endDate string) ([]CompareResponse, error) {
+	result := []CompareResponse{}
+
+	// Get approximate file listings at start and end dates
+	// Get a mapping of file name -> version num. Default is
+	// zero value.
+	startSet, err := d.getListingAtTime(pathName, startDate)
+	if err != nil {
+		err = utils.NewErr("Error in getting listing at time.", err)
+		log.Print(err)
+		return result, err
+	}
+	endSet, err := d.getListingAtTime(pathName, endDate)
+	if err != nil {
+		err = utils.NewErr("Error in getting listing at time.", err)
+		return result, err
+	}
+
+	// Compare file-by-file. Sort keys to be in order.
+	keys := []string{}
+	for k, _ := range endSet { keys = append(keys,k) }
+	sort.Strings(keys)
+	for _, file := range keys {
+		if startSet[file] == 0 {
+			// Present in endSet but not startSet means added since start date
+			result = append(result, CompareResponse{file, "Added"})
+		} else {
+			// Present in both sets
+			if startSet[file] == endSet[file] {
+				// Same VersionNum, so unchanged
+				result = append(result, CompareResponse{file, "Unchanged"})
+			} else {
+				// Different VersionNum, so modified
+				result = append(result, CompareResponse{file, "Updated"})
+			}
+		}
+	}
+	return result, err
+}
+
+// Get a list of files present at a time in a directory
+func (d *Directory) getListingAtTime(pathName string,
+	inputTime string) (map[string]int, error) {
+	// Query
+	listing := make(map[string]int)
+	query := fmt.Sprintf("select e.PathName, e.VersionNum "+
+		"from entries as e "+
+		"inner join ( "+
+		"select max(VersionNum) VersionNum, PathName "+
+		"from entries "+
+		"where PathName LIKE '%s%%' "+
+		"and DateModified <= '%s' "+
+		"group by PathName ) as max "+
+		"on max.PathName = e.PathName "+
+		"and max.VersionNum = e.VersionNum "+
+		"order by e.PathName",
+		pathName, inputTime)
+	log.Println("Query: "+query)
+	rows, err := d.ctx.Db.Query(query)
+	if err != nil {
+		return listing, utils.NewErr("No results found at time "+inputTime+".", err)
+	}
+	defer rows.Close()
+
+	// Process results
+	for rows.Next() {
+		md := Metadata{}
+		err = rows.Scan(&md.Path, &md.Version)
+		if err != nil {
+			err = utils.NewErr("Error in scanning rows.", err)
+			return listing, err
+		}
+		listing[md.Path] = md.Version
+	}
+	return listing, err
 }

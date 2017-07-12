@@ -92,7 +92,7 @@ func (f *File) versionFromTime(path string,
 	query := fmt.Sprintf("select * from entries where "+
 		"PathName='%s' and DateModified <= '%s' order "+
 		"by VersionNum desc", path, inputTime)
-	log.Println("Query: " + query)
+	log.Print("Query: " + query)
 	return f.topFromQuery(query)
 }
 

@@ -15,8 +15,7 @@ type DirectoryController struct {
 }
 
 // NewDirectoryController returns a new controller instance
-func NewDirectoryController(
-	ctx *utils.Context) *DirectoryController {
+func NewDirectoryController(ctx *utils.Context) *DirectoryController {
 	return &DirectoryController{
 		ctx: ctx,
 	}
@@ -25,6 +24,7 @@ func NewDirectoryController(
 // Register registers the directory endpoint with the router
 func (dc *DirectoryController) Register(router *mux.Router) {
 	router.HandleFunc("/directory", dc.Show)
+	router.HandleFunc("/compare", dc.Compare)
 }
 
 // Show handles requests for showing directory listing
@@ -51,6 +51,25 @@ func (dc *DirectoryController) Show(w http.ResponseWriter,
 		// Serve up latest version of the folder
 		result, err = dir.GetLatest(pathName, output)
 	}
+
+	if err != nil {
+		dc.BadRequest(w, err)
+		return
+	}
+	dc.Output(w, result)
+}
+
+func (dc *DirectoryController) Compare(w http.ResponseWriter,
+	r *http.Request) {
+	// Setup
+	dir := models.NewDirectory(dc.ctx)
+	pathName := r.URL.Query().Get("path-name")
+	startDate := r.URL.Query().Get("start-date")
+	endDate := r.URL.Query().Get("end-date")
+	var err error
+	var result interface{}
+
+	result, err = dir.CompareListing(pathName, startDate, endDate)
 
 	if err != nil {
 		dc.BadRequest(w, err)

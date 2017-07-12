@@ -1,8 +1,0 @@
-Server: ftp.ncbi.nih.gov
-Port: 21
-Username: anonymous
-Password: test@test.com
-SourcePath: /blast
-LocalPath: ./remote/blast
-LocalTop: ./remote
-Bucket: czbiohub-ncbi-store
