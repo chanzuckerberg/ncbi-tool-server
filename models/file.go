@@ -10,6 +10,7 @@ import (
 	"ncbi-tool-server/utils"
 	"strconv"
 	"time"
+	"path"
 )
 
 // File Model
@@ -73,7 +74,8 @@ func (f *File) GetAtTime(path string,
 // Gets an Entry for a file from the metadata information.
 func (f *File) entryFromMetadata(info Metadata) (Entry, error) {
 	key := f.getS3Key(info)
-	url, err := f.keyToURL(key)
+	downloadName := path.Base(info.Path)
+	url, err := f.keyToURL(key, downloadName)
 	if err != nil {
 		return Entry{}, err
 	}
@@ -143,15 +145,16 @@ func (f *File) getS3Key(info Metadata) string {
 
 // Gets a pre-signed temporary URL from S3 for a key.
 // Serves back link for client downloads.
-func (f *File) keyToURL(key string) (string, error) {
+func (f *File) keyToURL(key string, downloadName string) (string, error) {
 	req, _ := f.ctx.Store.GetObjectRequest(&s3.GetObjectInput{
 		Bucket: aws.String(f.ctx.Bucket),
 		Key:    aws.String(key),
+		ResponseContentDisposition: aws.String("attachment; filename="+downloadName),
 	})
 
 	out, err := req.Presign(1 * time.Hour)
 	if err != nil {
-		fmt.Println(out)
+		log.Println(out)
 		return "", errors.New("Couldn't generate URL. " + err.Error())
 	}
 	return out, err

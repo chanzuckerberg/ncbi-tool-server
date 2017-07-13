@@ -8,6 +8,7 @@ import (
 	"ncbi-tool-server/utils"
 	"log"
 	"sort"
+	"path"
 )
 
 // Directory Model
@@ -38,10 +39,11 @@ func (d *Directory) GetLatest(pathName string,
 	}
 
 	// Process results
+	downloadName := path.Base(pathName)
 	for _, val := range listing {
 		key := *val.Key
 		if output == "with-URLs" {
-			url, err = file.keyToURL(key)
+			url, err = file.keyToURL(key, downloadName)
 			if err != nil {
 				return resp, err
 			}
@@ -73,10 +75,11 @@ func (d *Directory) GetPast(pathName string, inputTime string,
 	}
 
 	// Process results
+	downloadName := path.Base(pathName)
 	for _, val := range listing {
 		key := file.getS3Key(val)
 		if output == "with-URLs" {
-			url, err = file.keyToURL(key)
+			url, err = file.keyToURL(key, downloadName)
 			if err != nil {
 				return resp, err
 			}
