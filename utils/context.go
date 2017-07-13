@@ -59,7 +59,7 @@ func (ctx *Context) SetupDatabase() {
 	}
 	rows, err := ctx.Db.Query("show tables like 'entries'")
 	if err != nil || !rows.Next() {
-		log.Fatal("Table 'entiries' does not exist.")
+		log.Fatal("Table 'entries' does not exist.")
 	}
 	log.Print("Successfully connected database.")
 }

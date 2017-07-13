@@ -23,8 +23,8 @@ func NewDirectoryController(ctx *utils.Context) *DirectoryController {
 
 // Register registers the directory endpoint with the router
 func (dc *DirectoryController) Register(router *mux.Router) {
+	router.HandleFunc("/directory/compare", dc.Compare)
 	router.HandleFunc("/directory", dc.Show)
-	router.HandleFunc("/compare", dc.Compare)
 }
 
 // Show handles requests for showing directory listing
