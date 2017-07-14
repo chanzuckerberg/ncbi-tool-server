@@ -2,7 +2,6 @@ package models
 
 import (
 	"errors"
-	"fmt"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"log"
@@ -105,19 +104,18 @@ func (d *Directory) getAtTimeDb(pathName string,
 	inputTime string) ([]Metadata, error) {
 	// Query
 	res := []Metadata{}
-	query := fmt.Sprintf("select e.PathName, e.VersionNum, "+
+	rows, err := d.ctx.Db.Query("select e.PathName, e.VersionNum, "+
 		"e.DateModified, e.ArchiveKey "+
 		"from entries as e "+
 		"inner join ( "+
 		"select max(VersionNum) VersionNum, PathName "+
 		"from entries "+
-		"where PathName LIKE '%s%%' "+
-		"and DateModified <= '%s' "+
+		"where PathName LIKE ? "+
+		"and DateModified <= ? "+
 		"group by PathName ) as max "+
 		"on max.PathName = e.PathName "+
 		"and max.VersionNum = e.VersionNum",
-		pathName, inputTime)
-	rows, err := d.ctx.Db.Query(query)
+		pathName + "%%", inputTime)
 	if err != nil {
 		return res, errors.New("no results found")
 	}
@@ -222,20 +220,18 @@ func (d *Directory) getListingAtTime(pathName string,
 	inputTime string) (map[string]int, error) {
 	// Query
 	listing := make(map[string]int)
-	query := fmt.Sprintf("select e.PathName, e.VersionNum "+
+	rows, err := d.ctx.Db.Query("select e.PathName, e.VersionNum, "+
+		"e.DateModified, e.ArchiveKey "+
 		"from entries as e "+
 		"inner join ( "+
 		"select max(VersionNum) VersionNum, PathName "+
 		"from entries "+
-		"where PathName LIKE '%s%%' "+
-		"and DateModified <= '%s' "+
+		"where PathName LIKE ? "+
+		"and DateModified <= ? "+
 		"group by PathName ) as max "+
 		"on max.PathName = e.PathName "+
-		"and max.VersionNum = e.VersionNum "+
-		"order by e.PathName",
-		pathName, inputTime)
-	log.Println("Query: " + query)
-	rows, err := d.ctx.Db.Query(query)
+		"and max.VersionNum = e.VersionNum",
+		pathName + "%%", inputTime)
 	if err != nil {
 		return listing, utils.NewErr("No results found at time "+inputTime+".", err)
 	}

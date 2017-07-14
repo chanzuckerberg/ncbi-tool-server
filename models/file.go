@@ -88,54 +88,27 @@ func (f *File) entryFromMetadata(info Metadata) (Entry, error) {
 
 // Gets metadata entry based on file name and given time.
 // Finds the version of the file just before the given time, if any.
-func (f *File) versionFromTime(path string,
-	inputTime string) (Metadata, error) {
-	// Query the database
-	query := fmt.Sprintf("select * from entries where "+
-		"PathName='%s' and DateModified <= '%s' order "+
-		"by VersionNum desc", path, inputTime)
-	log.Print("Query: " + query)
-	return f.topFromQuery(query)
-}
-
-// Gets column info from the top db result of the query.
-// Runs the query and return the columns of just the first result.
-func (f *File) topFromQuery(query string) (Metadata, error) {
-	md := Metadata{}
-	row, err := f.ctx.Db.Query(query)
-	if row == nil || err != nil {
-		return md, err
-	}
-	defer func() {
-		closeErr := row.Close()
-		if closeErr != nil {
-			err = utils.ComboErr("Couldn't close db row.", closeErr, err)
-			log.Println(err)
-		}
-	}()
-
-	// Process results
-	if !row.Next() {
-		return md, errors.New("no results for this query")
-	}
-	err = row.Scan(&md.Path, &md.Version, &md.ModTime, &md.ArchiveKey)
-	return md, err
+func (f *File) versionFromTime(path string, inputTime string) (Metadata,
+	error) {
+	res := f.ctx.Db.QueryRow("select * from entries where "+
+		"PathName=? and DateModified <= ? order "+
+		"by VersionNum desc limit 1", path, inputTime)
+	return rowToMetadata(res)
 }
 
 // Gets the metadata of the specified or latest version of the file.
-func (f *File) entryFromVersion(path string,
-	version int) (Metadata, error) {
-	query := ""
+func (f *File) entryFromVersion(path string, version int) (Metadata, error) {
+	var res *sql.Row
 	if version > 0 {
 		// Get specified version
-		query = fmt.Sprintf("select * from entries "+
-			"where PathName='%s' and VersionNum=%d", path, version)
+		res = f.ctx.Db.QueryRow("select * from entries "+
+			"where PathName=? and VersionNum=?", path, version)
 	} else {
 		// Get latest version
-		query = fmt.Sprintf("select * from entries "+
-			"where PathName='%s' order by VersionNum desc", path)
+		res = f.ctx.Db.QueryRow("select * from entries "+
+			"where PathName='%s' order by VersionNum desc limit 1", path)
 	}
-	return f.topFromQuery(query)
+	return rowToMetadata(res)
 }
 
 // Gets the S3 key for the given entry.
@@ -155,7 +128,8 @@ func (f *File) keyToURL(key string, downloadName string) (string, error) {
 	req, _ := f.ctx.Store.GetObjectRequest(&s3.GetObjectInput{
 		Bucket: aws.String(f.ctx.Bucket),
 		Key:    aws.String(key),
-		ResponseContentDisposition: aws.String("attachment; filename=" + downloadName),
+		ResponseContentDisposition: aws.String("attachment; filename=" +
+			downloadName),
 	})
 
 	out, err := req.Presign(1 * time.Hour)
@@ -173,9 +147,8 @@ func (f *File) GetHistory(path string) ([]Entry, error) {
 	res := []Entry{}
 
 	// Query the database
-	query := fmt.Sprintf("select * from entries "+
-		"where PathName='%s' order by VersionNum desc", path)
-	rows, err := f.ctx.Db.Query(query)
+	rows, err := f.ctx.Db.Query("select * from entries "+
+		"where PathName=? order by VersionNum desc", path)
 	if err != nil {
 		return res, err
 	}
@@ -203,4 +176,19 @@ func (f *File) GetHistory(path string) ([]Entry, error) {
 		res = append(res, entry)
 	}
 	return res, err
+}
+
+// RowToMetadata converts a SQL row into a Metadata entry and handles errors.
+func rowToMetadata(row *sql.Row) (Metadata, error) {
+	md := Metadata{}
+	err := row.Scan(&md.Path, &md.Version, &md.ModTime, &md.ArchiveKey)
+	switch {
+	case err == sql.ErrNoRows:
+		err = utils.NewErr("No results for this query.", err)
+		log.Print(err)
+	case err != nil:
+		err = utils.NewErr("Error retrieving results.", err)
+		log.Print(err)
+	}
+	return md, err
 }
