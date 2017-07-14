@@ -2,9 +2,9 @@ package controllers
 
 import (
 	"encoding/json"
+	"log"
 	"ncbi-tool-server/utils"
 	"net/http"
-	"log"
 )
 
 // ApplicationController for general application functions
@@ -20,15 +20,15 @@ func NewApplicationController(
 
 // ErrorResponse contains error information for the client
 type ErrorResponse struct {
-	Code    int
-	Error   string
+	Code  int
+	Error string
 }
 
 // InternalError sends an error for server errors to the client
 func (ac *ApplicationController) InternalError(w http.ResponseWriter,
 	err error) {
 	res := ErrorResponse{http.StatusInternalServerError,
-		"Error: "+err.Error()}
+		"Error: " + err.Error()}
 	ac.ErrorOutput(w, res)
 }
 
@@ -36,16 +36,16 @@ func (ac *ApplicationController) InternalError(w http.ResponseWriter,
 func (ac *ApplicationController) BadRequest(w http.ResponseWriter,
 	err error) {
 	res := ErrorResponse{http.StatusBadRequest,
-	                     "Request error: "+err.Error()}
+		"Request error: " + err.Error()}
 	ac.ErrorOutput(w, res)
 }
 
-// Output marshals a struct into JSON format for output
+// ErrorOutput writes a error response to the client
 func (ac *ApplicationController) ErrorOutput(w http.ResponseWriter,
 	result ErrorResponse) {
 	js, err := json.Marshal(result)
 	if err != nil {
-		log.Print("Error with JSON marshal: "+err.Error())
+		log.Print("Error with JSON marshal: " + err.Error())
 		http.Error(w, "Error: "+err.Error(),
 			http.StatusInternalServerError)
 	}
@@ -53,7 +53,7 @@ func (ac *ApplicationController) ErrorOutput(w http.ResponseWriter,
 	w.WriteHeader(result.Code)
 	_, err = w.Write(js)
 	if err != nil {
-		log.Print("Error writing JSON output: "+err.Error())
+		log.Print("Error writing JSON output: " + err.Error())
 	}
 }
 
@@ -69,6 +69,6 @@ func (ac *ApplicationController) Output(w http.ResponseWriter,
 	w.WriteHeader(http.StatusOK)
 	_, err = w.Write(js)
 	if err != nil {
-		log.Print("Error writing JSON output: "+err.Error())
+		log.Print("Error writing JSON output: " + err.Error())
 	}
 }

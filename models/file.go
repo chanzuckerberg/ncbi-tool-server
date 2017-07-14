@@ -8,9 +8,9 @@ import (
 	"github.com/aws/aws-sdk-go/service/s3"
 	"log"
 	"ncbi-tool-server/utils"
+	"path"
 	"strconv"
 	"time"
-	"path"
 )
 
 // File Model
@@ -106,7 +106,13 @@ func (f *File) topFromQuery(query string) (Metadata, error) {
 	if row == nil || err != nil {
 		return md, err
 	}
-	defer row.Close()
+	defer func() {
+		closeErr := row.Close()
+		if closeErr != nil {
+			err = utils.ComboErr("Couldn't close db row.", closeErr, err)
+			log.Println(err)
+		}
+	}()
 
 	// Process results
 	if !row.Next() {
@@ -149,7 +155,7 @@ func (f *File) keyToURL(key string, downloadName string) (string, error) {
 	req, _ := f.ctx.Store.GetObjectRequest(&s3.GetObjectInput{
 		Bucket: aws.String(f.ctx.Bucket),
 		Key:    aws.String(key),
-		ResponseContentDisposition: aws.String("attachment; filename="+downloadName),
+		ResponseContentDisposition: aws.String("attachment; filename=" + downloadName),
 	})
 
 	out, err := req.Presign(1 * time.Hour)
@@ -173,7 +179,13 @@ func (f *File) GetHistory(path string) ([]Entry, error) {
 	if err != nil {
 		return res, err
 	}
-	defer rows.Close()
+	defer func() {
+		closeErr := rows.Close()
+		if closeErr != nil {
+			err = utils.ComboErr("Couldn't close db rows.", closeErr, err)
+			log.Println(err)
+		}
+	}()
 
 	// Process results
 	md := Metadata{}

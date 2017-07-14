@@ -10,10 +10,10 @@ import (
 
 // Context contains general state variables for the server
 type Context struct {
-	Db         *sql.DB
-	Bucket     string
-	Store      s3iface.S3API
-	Port       string
+	Db     *sql.DB
+	Bucket string
+	Store  s3iface.S3API
+	Port   string
 }
 
 // NewContext initializes new general state variables

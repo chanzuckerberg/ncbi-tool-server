@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/s3"
-	"ncbi-tool-server/utils"
 	"log"
-	"sort"
+	"ncbi-tool-server/utils"
 	"path"
+	"sort"
 )
 
 // Directory Model
@@ -121,7 +121,13 @@ func (d *Directory) getAtTimeDb(pathName string,
 	if err != nil {
 		return res, errors.New("no results found")
 	}
-	defer rows.Close()
+	defer func() {
+		closeErr := rows.Close()
+		if closeErr != nil {
+			err = utils.ComboErr("Couldn't close db rows.", closeErr, err)
+			log.Println(err)
+		}
+	}()
 
 	// Process results
 	for rows.Next() {
@@ -159,12 +165,17 @@ func (d *Directory) ListObj(pathName string) ([]*s3.Object, error) {
 	return pruned, err
 }
 
+// CompareResponse is for comparing directory diffs between times. Tag is
+// used for labeling files as added, updated, or unchanged.
 type CompareResponse struct {
-	Path       string
-	Tag        string
+	Path string
+	Tag  string
 }
 
-func (d *Directory) CompareListing(pathName string, startDate string, endDate string) ([]CompareResponse, error) {
+// CompareListing compares the directory state betwen the startDate and
+// endDate and returns a file listing of CompareResponses.
+func (d *Directory) CompareListing(pathName string, startDate string,
+	endDate string) ([]CompareResponse, error) {
 	result := []CompareResponse{}
 
 	// Get approximate file listings at start and end dates
@@ -184,7 +195,9 @@ func (d *Directory) CompareListing(pathName string, startDate string, endDate st
 
 	// Compare file-by-file. Sort keys to be in order.
 	keys := []string{}
-	for k, _ := range endSet { keys = append(keys,k) }
+	for k := range endSet {
+		keys = append(keys, k)
+	}
 	sort.Strings(keys)
 	for _, file := range keys {
 		if startSet[file] == 0 {
@@ -221,12 +234,18 @@ func (d *Directory) getListingAtTime(pathName string,
 		"and max.VersionNum = e.VersionNum "+
 		"order by e.PathName",
 		pathName, inputTime)
-	log.Println("Query: "+query)
+	log.Println("Query: " + query)
 	rows, err := d.ctx.Db.Query(query)
 	if err != nil {
 		return listing, utils.NewErr("No results found at time "+inputTime+".", err)
 	}
-	defer rows.Close()
+	defer func() {
+		closeErr := rows.Close()
+		if closeErr != nil {
+			err = utils.ComboErr("Couldn't close db rows.", closeErr, err)
+			log.Println(err)
+		}
+	}()
 
 	// Process results
 	for rows.Next() {

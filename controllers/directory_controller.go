@@ -1,11 +1,11 @@
 package controllers
 
 import (
+	"errors"
 	"github.com/gorilla/mux"
 	"ncbi-tool-server/models"
 	"ncbi-tool-server/utils"
 	"net/http"
-	"errors"
 )
 
 // DirectoryController is for handling directory actions
@@ -59,6 +59,7 @@ func (dc *DirectoryController) Show(w http.ResponseWriter,
 	dc.Output(w, result)
 }
 
+// Compare handles requests for comparing directory states at different times
 func (dc *DirectoryController) Compare(w http.ResponseWriter,
 	r *http.Request) {
 	// Setup

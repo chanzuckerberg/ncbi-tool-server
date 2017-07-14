@@ -1,11 +1,11 @@
 package controllers
 
 import (
+	"errors"
 	"github.com/gorilla/mux"
 	"ncbi-tool-server/models"
 	"ncbi-tool-server/utils"
 	"net/http"
-	"errors"
 )
 
 // FileController is for handling file actions
