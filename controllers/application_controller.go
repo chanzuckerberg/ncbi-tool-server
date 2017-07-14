@@ -72,3 +72,12 @@ func (ac *ApplicationController) Output(w http.ResponseWriter,
 		log.Print("Error writing JSON output: " + err.Error())
 	}
 }
+
+func (ac *ApplicationController) DefaultResponse(w http.ResponseWriter,
+	result interface{}, err error) {
+	if err != nil {
+		ac.BadRequest(w, err)
+		return
+	}
+	ac.Output(w, result)
+}

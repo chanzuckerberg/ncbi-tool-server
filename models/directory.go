@@ -115,7 +115,7 @@ func (d *Directory) getAtTimeDb(pathName string,
 		"group by PathName ) as max "+
 		"on max.PathName = e.PathName "+
 		"and max.VersionNum = e.VersionNum",
-		pathName + "%%", inputTime)
+		pathName+"%%", inputTime)
 	if err != nil {
 		return res, errors.New("no results found")
 	}
@@ -220,8 +220,7 @@ func (d *Directory) getListingAtTime(pathName string,
 	inputTime string) (map[string]int, error) {
 	// Query
 	listing := make(map[string]int)
-	rows, err := d.ctx.Db.Query("select e.PathName, e.VersionNum, "+
-		"e.DateModified, e.ArchiveKey "+
+	rows, err := d.ctx.Db.Query("select e.PathName, e.VersionNum "+
 		"from entries as e "+
 		"inner join ( "+
 		"select max(VersionNum) VersionNum, PathName "+
@@ -231,7 +230,7 @@ func (d *Directory) getListingAtTime(pathName string,
 		"group by PathName ) as max "+
 		"on max.PathName = e.PathName "+
 		"and max.VersionNum = e.VersionNum",
-		pathName + "%%", inputTime)
+		pathName+"%%", inputTime)
 	if err != nil {
 		return listing, utils.NewErr("No results found at time "+inputTime+".", err)
 	}

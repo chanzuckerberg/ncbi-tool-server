@@ -52,15 +52,6 @@ func (f *File) GetVersion(path string,
 	return f.entryFromMetadata(info)
 }
 
-// GetLatest gets the response for a file, latest version.
-func (f *File) GetLatest(path string) (Entry, error) {
-	info, err := f.entryFromVersion(path, 0)
-	if err != nil {
-		return Entry{}, err
-	}
-	return f.entryFromMetadata(info)
-}
-
 // GetAtTime gets the file version at/just before the given time.
 func (f *File) GetAtTime(path string,
 	inputTime string) (Entry, error) {

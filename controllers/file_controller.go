@@ -24,6 +24,8 @@ func NewFileController(ctx *utils.Context) *FileController {
 // Register registers the file endpoint with the router
 func (fc *FileController) Register(router *mux.Router) {
 	router.HandleFunc("/file", fc.Show)
+	router.HandleFunc("/file/history", fc.History)
+	router.HandleFunc("/file/at-time", fc.AtTime)
 }
 
 // Show handles requests for showing file information
@@ -31,35 +33,41 @@ func (fc *FileController) Show(w http.ResponseWriter,
 	r *http.Request) {
 	// Setup
 	file := models.NewFile(fc.ctx)
-	op := r.URL.Query().Get("op")
 	pathName := r.URL.Query().Get("path-name")
 	var err error
-	var result interface{}
+	var result models.Entry
 	versionNum := r.URL.Query().Get("version-num")
-	inputTime := r.URL.Query().Get("input-time")
 
 	// Dispatch operations
 	switch {
 	case pathName == "":
 		fc.BadRequest(w, errors.New("empty pathName"))
 		return
-	case op == "history":
-		// Serve up file history
-		result, err = file.GetHistory(pathName)
-	case op == "at-time":
-		// Serve up the file version at or before a given time
-		result, err = file.GetAtTime(pathName, inputTime)
 	case versionNum != "":
 		// Serve up file version
 		result, err = file.GetVersion(pathName, versionNum)
 	default:
 		// Serve up the file, latest version
-		result, err = file.GetLatest(pathName)
+		result, err = file.GetVersion(pathName, "0")
 	}
+	fc.DefaultResponse(w, result, err)
+}
 
-	if err != nil {
-		fc.BadRequest(w, err)
-		return
-	}
-	fc.Output(w, result)
+// History handles requests for showing file version history.
+func (fc *FileController) History(w http.ResponseWriter,
+	r *http.Request) {
+	file := models.NewFile(fc.ctx)
+	pathName := r.URL.Query().Get("path-name")
+	result, err := file.GetHistory(pathName)
+	fc.DefaultResponse(w, result, err)
+}
+
+// AtTime handles requests for getting a file version at a point in time.
+func (fc *FileController) AtTime(w http.ResponseWriter,
+	r *http.Request) {
+	file := models.NewFile(fc.ctx)
+	pathName := r.URL.Query().Get("path-name")
+	inputTime := r.URL.Query().Get("input-time")
+	result, err := file.GetAtTime(pathName, inputTime)
+	fc.DefaultResponse(w, result, err)
 }

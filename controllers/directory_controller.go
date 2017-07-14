@@ -1,7 +1,6 @@
 package controllers
 
 import (
-	"errors"
 	"github.com/gorilla/mux"
 	"ncbi-tool-server/models"
 	"ncbi-tool-server/utils"
@@ -23,58 +22,39 @@ func NewDirectoryController(ctx *utils.Context) *DirectoryController {
 
 // Register registers the directory endpoint with the router
 func (dc *DirectoryController) Register(router *mux.Router) {
-	router.HandleFunc("/directory/compare", dc.Compare)
 	router.HandleFunc("/directory", dc.Show)
+	router.HandleFunc("/directory/compare", dc.Compare)
+	router.HandleFunc("/directory/at-time", dc.AtTime)
 }
 
-// Show handles requests for showing directory listing
+// Show handles requests for showing a directory listing
 func (dc *DirectoryController) Show(w http.ResponseWriter,
 	r *http.Request) {
-	// Setup
 	dir := models.NewDirectory(dc.ctx)
-	inputTime := r.URL.Query().Get("input-time")
-	op := r.URL.Query().Get("op")
 	pathName := r.URL.Query().Get("path-name")
 	output := r.URL.Query().Get("output")
-	var err error
-	var result interface{}
-
-	// Dispatch operations
-	switch {
-	case pathName == "":
-		dc.BadRequest(w, errors.New("empty pathName"))
-		return
-	case op == "at-time":
-		// Serve up folder at a given time
-		result, err = dir.GetPast(pathName, inputTime, output)
-	default:
-		// Serve up latest version of the folder
-		result, err = dir.GetLatest(pathName, output)
-	}
-
-	if err != nil {
-		dc.BadRequest(w, err)
-		return
-	}
-	dc.Output(w, result)
+	result, err := dir.GetLatest(pathName, output)
+	dc.DefaultResponse(w, result, err)
 }
 
 // Compare handles requests for comparing directory states at different times
 func (dc *DirectoryController) Compare(w http.ResponseWriter,
 	r *http.Request) {
-	// Setup
 	dir := models.NewDirectory(dc.ctx)
 	pathName := r.URL.Query().Get("path-name")
 	startDate := r.URL.Query().Get("start-date")
 	endDate := r.URL.Query().Get("end-date")
-	var err error
-	var result interface{}
+	result, err := dir.CompareListing(pathName, startDate, endDate)
+	dc.DefaultResponse(w, result, err)
+}
 
-	result, err = dir.CompareListing(pathName, startDate, endDate)
-
-	if err != nil {
-		dc.BadRequest(w, err)
-		return
-	}
-	dc.Output(w, result)
+// AtTime handles requests for a directory listing at a given time
+func (dc *DirectoryController) AtTime(w http.ResponseWriter,
+	r *http.Request) {
+	dir := models.NewDirectory(dc.ctx)
+	pathName := r.URL.Query().Get("path-name")
+	inputTime := r.URL.Query().Get("input-time")
+	output := r.URL.Query().Get("output")
+	result, err := dir.GetPast(pathName, inputTime, output)
+	dc.DefaultResponse(w, result, err)
 }
