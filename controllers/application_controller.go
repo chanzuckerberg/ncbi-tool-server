@@ -73,6 +73,8 @@ func (ac *ApplicationController) Output(w http.ResponseWriter,
 	}
 }
 
+// DefaultResponse returns a bad request error to the client or a formatted
+// JSON output.
 func (ac *ApplicationController) DefaultResponse(w http.ResponseWriter,
 	result interface{}, err error) {
 	if err != nil {
