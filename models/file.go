@@ -97,7 +97,7 @@ func (f *File) entryFromVersion(path string, version int) (Metadata, error) {
 	} else {
 		// Get latest version
 		res = f.ctx.Db.QueryRow("select * from entries "+
-			"where PathName='%s' order by VersionNum desc limit 1", path)
+			"where PathName=? order by VersionNum desc limit 1", path)
 	}
 	return rowToMetadata(res)
 }
