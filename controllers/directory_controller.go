@@ -5,6 +5,7 @@ import (
 	"ncbi-tool-server/models"
 	"ncbi-tool-server/utils"
 	"net/http"
+	"time"
 )
 
 // DirectoryController is for handling directory actions
@@ -31,9 +32,10 @@ func (dc *DirectoryController) Register(router *mux.Router) {
 func (dc *DirectoryController) Show(w http.ResponseWriter,
 	r *http.Request) {
 	dir := models.NewDirectory(dc.ctx)
-	pathName := r.URL.Query().Get("path-name")
+	pathName := utils.GetDirPath(r)
 	output := r.URL.Query().Get("output")
-	result, err := dir.GetLatest(pathName, output)
+	now := time.Now().Format("2006-01-02T03:04:05")
+	result, err := dir.GetPast(pathName, now, output)
 	dc.DefaultResponse(w, result, err)
 }
 
@@ -41,7 +43,7 @@ func (dc *DirectoryController) Show(w http.ResponseWriter,
 func (dc *DirectoryController) Compare(w http.ResponseWriter,
 	r *http.Request) {
 	dir := models.NewDirectory(dc.ctx)
-	pathName := r.URL.Query().Get("path-name")
+	pathName := utils.GetDirPath(r)
 	startDate := r.URL.Query().Get("start-date")
 	endDate := r.URL.Query().Get("end-date")
 	result, err := dir.CompareListing(pathName, startDate, endDate)
@@ -52,7 +54,7 @@ func (dc *DirectoryController) Compare(w http.ResponseWriter,
 func (dc *DirectoryController) AtTime(w http.ResponseWriter,
 	r *http.Request) {
 	dir := models.NewDirectory(dc.ctx)
-	pathName := r.URL.Query().Get("path-name")
+	pathName := utils.GetDirPath(r)
 	inputTime := r.URL.Query().Get("input-time")
 	output := r.URL.Query().Get("output")
 	result, err := dir.GetPast(pathName, inputTime, output)

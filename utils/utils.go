@@ -3,6 +3,8 @@ package utils
 import (
 	"errors"
 	"fmt"
+	"net/http"
+	"strings"
 )
 
 // NewErr combines a custom comment and error into a new formatted error.
@@ -28,4 +30,19 @@ func ComboErr(input string, first error, second error) error {
 		return NewErr(input, second)
 	}
 	return errors.New(input)
+}
+
+// GetDirPath gets a directory path name from the URL and formats it
+func GetDirPath(r *http.Request) string {
+	res := r.URL.Query().Get("path-name")
+	if res == "" {
+		return res
+	}
+	if !strings.HasPrefix(res, "/") {
+		res = "/" + res
+	}
+	if !strings.HasSuffix(res, "/") {
+		res += "/"
+	}
+	return res
 }
