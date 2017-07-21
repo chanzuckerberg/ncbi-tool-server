@@ -2,8 +2,6 @@ package models
 
 import (
 	"errors"
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/service/s3"
 	"log"
 	"ncbi-tool-server/utils"
 	"path"
