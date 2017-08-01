@@ -11,6 +11,7 @@ import (
 	"path"
 	"strconv"
 	"time"
+	"strings"
 )
 
 // File Model
@@ -128,6 +129,7 @@ func (f *File) keyToURL(key string, downloadName string) (string, error) {
 		log.Println(out)
 		return "", errors.New("Couldn't generate URL. " + err.Error())
 	}
+	out = strings.Replace(out, `\u0026`, "&", -1)
 	return out, err
 }
 
